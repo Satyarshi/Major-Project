@@ -10,15 +10,16 @@ const getMarks = async (req, res) => {
       return res.status(400).json({ error: 'session, section, courseId, and semester are required.' });
     }
 
-    // Step 1: Validate the course exists
+    const sectionArray = section.split(',').map(s => s.trim());
+
+    // Step 1: Ensure course exists
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    // Step 2: Find all students in that session and section enrolled in the course
+    // Step 2: Find students in given section, semester, and course
     const students = await Student.find({
-      session,
       section,
       semester,
       courses: courseId
@@ -28,18 +29,20 @@ const getMarks = async (req, res) => {
       return res.status(404).json({ message: 'No students found for given criteria' });
     }
 
-    // Step 3: Get their marks
     const studentIds = students.map(s => s._id);
 
+    // Step 3: Fetch marks for those students
     const marks = await Marks.find({
       student: { $in: studentIds },
       course: courseId,
       session,
-      section,
+      section: { $in: sectionArray },
       semester
-    }).populate('student', 'name rollNo')  // Populate basic student info
-      .populate('course', 'courseName courseId'); // Optional
+    })
+      .populate('student', 'name rollNo')
+      .populate('course', 'courseName courseId');
 
+    // Step 4: Directly return marks without merging minMarks
     return res.status(200).json({ marks });
 
   } catch (error) {

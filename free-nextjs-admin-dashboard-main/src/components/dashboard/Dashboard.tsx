@@ -1,20 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/apiClient'; // Adjust the import path as needed
 import ComponentCard from "@/components/common/ComponentCard";
-
 
 interface Course {
   _id: string;
   courseName: string;
   courseId: string;
+  courseCode: string;
   session: string;
   semester: string;
   department: string;
   class: string;
   sections: string[];
-  outcomes: string[];
+  outcomes: {
+    coNumber: string;
+    description: string;
+    minMarks: number;
+    _id: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +35,7 @@ interface Dashboard {
 }
 
 const Dashboard: React.FC = () => {
+  const router = useRouter();
   const [facultyData, setFacultyData] = useState<Dashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +62,19 @@ const Dashboard: React.FC = () => {
     console.log('Add course clicked');
     // You can replace this with your navigation logic
     // router.push('/add-course') or setShowAddCourseModal(true)
+  };
+
+  const handleViewMarks = (course: Course, section: string) => {
+    // Navigate to marks table page with query parameters
+    const queryParams = new URLSearchParams({
+      courseId: course._id,
+      courseName: course.courseName,
+      session: course.session,
+      semester: course.semester,
+      section: section,
+    });
+    
+    router.push(`/marks-tables?${queryParams.toString()}`);
   };
 
   if (loading) {
@@ -85,11 +105,10 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 dark:bg-gray-900 dark:h-screen">
       {/* Faculty Information Header */}
       <ComponentCard
         title={facultyData.name}
-        // desc="Faculty Profile Information"
         className="mb-8"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-300">
@@ -159,14 +178,14 @@ const Dashboard: React.FC = () => {
                 desc={`${course.courseId} • ${course.session}`}
                 className="hover:shadow-md transition-shadow duration-200"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-4">
                   <div>
                     <span className="font-medium text-gray-600 dark:text-gray-300">Course:</span>
                     <p className="text-gray-800 dark:text-white/90 mt-1">{course.class}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600 dark:text-gray-300">Semester:</span>
-                    <p className="text-gray-800 dark:text-white/90 mt-1 ">{course.semester}</p>
+                    <p className="text-gray-800 dark:text-white/90 mt-1">{course.semester}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600 dark:text-gray-300">Sections:</span>
@@ -174,13 +193,48 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div>
                     <span className="font-medium text-gray-600 dark:text-gray-300">Outcomes:</span>
-                    <p className="text-gray-800 dark:text-white/90 mt-1">{course.outcomes.length} defined</p>
+                    <p className="text-gray-800 dark:text-white/90 mt-1">{course.outcomes.length}</p>
                   </div>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="pb-4 border-b border-gray-100 dark:border-gray-700 mb-4">
                   <span className="font-medium text-gray-600 dark:text-gray-300">Department:</span>
                   <p className="text-gray-800 dark:text-white/90 text-sm mt-1">{course.department}</p>
+                </div>
+
+                {/* View Marks Buttons - One for each section */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300 mr-2">
+                    View Marks:
+                  </span>
+                  {course.sections.map((section) => (
+                    <button
+                      key={section}
+                      onClick={() => handleViewMarks(course, section)}
+                      className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-medium py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 flex items-center"
+                    >
+                      <svg
+                        className="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      Section {section}
+                    </button>
+                  ))}
                 </div>
               </ComponentCard>
             ))}

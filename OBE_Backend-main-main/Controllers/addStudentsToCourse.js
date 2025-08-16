@@ -3,13 +3,7 @@ const Course = require('../models/Course');
 
 exports.addStudentsToCourse = async (req, res) => {
   try {
-    const { session, semester,  section, courseName, students } = req.body;
-
-    // Find course by name (case-insensitive)
-    const course = await Course.findOne({ courseName: new RegExp('^' + courseName + '$', 'i') });
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-
-    const courseId = course._id;
+    const { session, semester,  section, courseId, students } = req.body;
 
     const createdStudents = [];
     for (const s of students) {

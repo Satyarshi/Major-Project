@@ -18,7 +18,6 @@ app.use(cors({
 // Routes
 app.use('/api/v1', require('./Routes/auth'));
 app.use('/api/v1', require('./Routes/courses'));
-app.use('/api/v1', require('./Routes/courseoutcome'));
 app.use('/api/v1', require('./Routes/addStudent'));
 app.use('/api/v1', require('./Routes/facultyprofile'));
 app.use('/api/v1', require('./Routes/marks'));
