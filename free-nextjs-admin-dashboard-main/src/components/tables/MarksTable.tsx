@@ -258,9 +258,10 @@ export default function MarksTable({
     return (
       examData.coMarks
         ?.filter((co: COData) => co.isApplicable && co.marksObtained !== null)
-        ?.reduce((sum, co) => sum + (co.marksObtained ?? 0), 0) || 0
+        ?.reduce((sum, co) => sum + Number(co.marksObtained ?? 0), 0) || 0
     );
   };
+
 
   // Calculate total minimum marks for current exam
   const getTotalMinMarks = (examData: Exam | null): number | string => {

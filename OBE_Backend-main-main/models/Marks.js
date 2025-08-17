@@ -28,7 +28,7 @@ const mongoose = require('mongoose');
 
 const coMarksSchema = new mongoose.Schema({
   coNumber: { type: String, required: true }, // e.g., "CO1"
-  marksObtained: { type: Number, default: null }, // null or actual marks
+  marksObtained: { type: String, default: null }, // null or actual marks
   isApplicable: { type: Boolean, default: false }, // false if not applicable
   minMarks: { type: Number, required: true }, 
 }, { _id: false });

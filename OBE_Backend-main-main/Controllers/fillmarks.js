@@ -4,15 +4,9 @@ const Course = require("../models/Course");
 
 exports.getStudentsForCourse = async (req, res) => {
   try {
-    const { session, semester, section, courseName } = req.body;
+    const { session, semester, section, courseId } = req.body;
 
-    // Find course by name (case-insensitive) and get its ID
-    const course = await Course.findOne({
-      courseName: new RegExp("^" + courseName + "$", "i"),
-    });
-    if (!course) return res.status(404).json({ error: "Course not found" });
-
-    const courseId = course._id; // Convert course name to course ID
+    if (!courseId) return res.status(404).json({ error: "Course not found" });
 
     // Find students enrolled in the course using course ID
     const students = await Student.find({

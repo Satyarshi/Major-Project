@@ -52,7 +52,8 @@ const navItems: NavItem[] = [
     name: "Tables",
     icon: <TableIcon />,
     subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false },
-    { name: "Marks Table", path: "/marks-tables", pro: false }
+    { name: "Marks Table", path: "/marks-tables", pro: false },
+    { name: "Edit Marks", path: "/edit-tables", pro: false }
     ],
   },
   {
