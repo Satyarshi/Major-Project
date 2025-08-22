@@ -3,7 +3,7 @@ const Course = require('../models/Course');
 
 exports.addStudentsToCourse = async (req, res) => {
   try {
-    const { session, semester,  section, courseId, students } = req.body;
+    const { session, semester,  section, courseId, students,department,class: className } = req.body;
 
     const createdStudents = [];
     for (const s of students) {
@@ -14,9 +14,10 @@ exports.addStudentsToCourse = async (req, res) => {
           name: s.name,
           rollNo: s.rollNo,
           section: section ,
-          courses: [courseId],
+          courses: [courseId],                
           semester: semester,
-          // Don't set email field at all - let it be undefined
+          department,
+          class: className
         });
       } else {
         if (!student.courses.includes(courseId)) {

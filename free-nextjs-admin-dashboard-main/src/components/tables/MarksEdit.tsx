@@ -73,6 +73,8 @@ interface MarksEditPageProps {
   section?: string;
   semester?: string;
   courseId?: string;
+  class?: string;
+  department?: string;
 }
 
 // Badge component
@@ -158,11 +160,14 @@ const ErrorMessage = ({ message, onRetry }: { message: string; onRetry?: () => v
   </div>
 );
 
+// Updated component function signature
 export default function MarksEditPage({
   session = "2025-26",
   section = "A",
   semester = "5",
-  courseId = "689eda1793dd57cae6cc5f44"
+  courseId = "689eda1793dd57cae6cc5f44",
+  class: className,  // Rename 'class' to 'className' since 'class' is a reserved word
+  department
 }: MarksEditPageProps) {
   const [marksData, setMarksData] = useState<MarksData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -178,54 +183,60 @@ export default function MarksEditPage({
   const examTypes: string[] = ["preCT", "CT1", "CT2", "PUE", "UE"];
   const allCoNumbers: string[] = ["CO1", "CO2", "CO3", "CO4", "CO5"];
 
+
   // API call function to fetch existing data
-  const fetchMarksData = async () => {
+  
+// Updated fetchMarksData function
+const fetchMarksData = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    // First, always fetch all students
+    const studentsResponse = await apiClient.post('/students/fetch', {
+      session,
+      semester,
+      section, 
+      courseId,
+      class: className,
+      department
+    });
+    const allStudents = studentsResponse.data?.students || [];
+
+    // Then try to fetch existing marks
     try {
-      setLoading(true);
-      setError(null);
-
-      // First, always fetch all students
-      const studentsResponse = await apiClient.post('/students/fetch', {
-        session,
-        semester,
-        section,
-        courseId
-      });
-      
-      const allStudents = studentsResponse.data?.students || [];
-
-      // Then try to fetch existing marks
-      try {
-        const marksResponse = await apiClient.get('/marks', {
-          params: {
-            session,
-            section,
-            semester,
-            courseId
-          }
-        });
-
-        if (marksResponse.data && marksResponse.data.marks) {
-          setMarksData(marksResponse.data);
-          // Merge all students with existing marks data
-          initializeEditableDataWithAllStudents(allStudents, marksResponse.data.marks);
-        } else {
-          // Initialize with all students but empty marks
-          initializeWithAllStudents(allStudents);
+      const marksResponse = await apiClient.get('/marks', {
+        params: {
+          session,
+          section,
+          semester,
+          courseId,
+          class: className,
+          department
         }
-      } catch (marksErr: any) {
-        console.log("No existing marks found, initializing with all students");
+      });
+
+      if (marksResponse.data && marksResponse.data.marks) {
+        setMarksData(marksResponse.data);
+        // Merge all students with existing marks data
+        initializeEditableDataWithAllStudents(allStudents, marksResponse.data.marks);
+      } else {
         // Initialize with all students but empty marks
         initializeWithAllStudents(allStudents);
       }
-
-    } catch (err: any) {
-      console.error("Error fetching data:", err);
-      handleApiError(err);
-    } finally {
-      setLoading(false);
+    } catch (marksErr: any) {
+      console.log("No existing marks found, initializing with all students");
+      // Initialize with all students but empty marks
+      initializeWithAllStudents(allStudents);
     }
-  };
+
+  } catch (err: any) {
+    console.error("Error fetching data:", err);
+    handleApiError(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleApiError = (err: any) => {
     if (err.response?.status === 401) {
@@ -400,55 +411,57 @@ export default function MarksEditPage({
   };
 
   // Save marks (only changed students)
-  const saveMarks = async () => {
-    try {
-      setSaving(true);
-      setSaveSuccess(false);
-      setError(null);
+const saveMarks = async () => {
+  try {
+    setSaving(true);
+    setSaveSuccess(false);
+    setError(null);
 
-      // Get only the students that have been modified
-      const changedStudentsData = editableData.filter(student => 
-        changedStudents.has(student.rollNo)
-      );
+    // Get only the students that have been modified
+    const changedStudentsData = editableData.filter(student => 
+      changedStudents.has(student.rollNo)
+    );
 
-      if (changedStudentsData.length === 0) {
-        setError("No changes to save.");
-        return;
-      }
-
-      const payload = {
-        session,
-        semester,
-        section,
-        courseId,
-        marksData: changedStudentsData.map(student => ({
-          rollNo: student.rollNo,
-          exams: student.exams,
-          universityMark: student.universityMark
-        }))
-      };
-
-      console.log(`Saving marks for ${changedStudentsData.length} students:`, changedStudentsData.map(s => s.rollNo));
-      
-      await apiClient.post('/students/fillMarks', payload);
-      
-      // Update original data to reflect saved changes
-      setOriginalData(JSON.parse(JSON.stringify(editableData)));
-      setChangedStudents(new Set());
-      
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err: any) {
-      console.error("Error saving marks:", err);
-      handleApiError(err);
-    } finally {
-      setSaving(false);
+    if (changedStudentsData.length === 0) {
+      setError("No changes to save.");
+      return;
     }
-  };
+
+    const payload = {
+      session,
+      semester,
+      section,
+      courseId,
+      class: className,
+      department,
+      marksData: changedStudentsData.map(student => ({
+        rollNo: student.rollNo,
+        exams: student.exams,
+        universityMark: student.universityMark
+      }))
+    };
+
+    console.log(`Saving marks for ${changedStudentsData.length} students:`, changedStudentsData.map(s => s.rollNo));
+    
+    await apiClient.post('/students/fillMarks', payload);
+    
+    // Update original data to reflect saved changes
+    setOriginalData(JSON.parse(JSON.stringify(editableData)));
+    setChangedStudents(new Set());
+    
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  } catch (err: any) {
+    console.error("Error saving marks:", err);
+    handleApiError(err);
+  } finally {
+    setSaving(false);
+  }
+};
 
   useEffect(() => {
-    fetchMarksData();
-  }, [session, section, semester, courseId]);
+  fetchMarksData();
+}, [session, section, semester, courseId, className, department]);
 
   // Get current exam data for a student
   const getCurrentExamData = (student: StudentData): ExamData | null => {

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import apiClient from "@/lib/apiClient";
 
 type BadgeColor = "success" | "warning" | "error" | "default";
@@ -52,6 +53,8 @@ interface Mark {
   student: Student;
   section: string;
   exams: Exam[];
+  class: string;
+  department: string;
   universityMark: number;
 }
 
@@ -64,6 +67,16 @@ interface MarksTableProps {
   section?: string;
   semester?: string;
   courseId?: string;
+  class?: string;
+  department?: string;
+  onEditMarks?: (params: {
+    session: string;
+    section: string;
+    semester: string;
+    courseId: string;
+    class: string;
+    department: string;
+  }) => void;
 }
 
 // Note: Token handling is now managed by the apiClient interceptors
@@ -155,15 +168,53 @@ export default function MarksTable({
   session = "2025-26",
   section = "A",
   semester = "5",
-  courseId = "689eda1793dd57cae6cc5f44"
+  courseId = "689eda1793dd57cae6cc5f44",
+  class: propClass,
+  department: propDepartment,
+  onEditMarks
 }: MarksTableProps) {
   const [marksData, setMarksData] = useState<MarksData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedExamType, setSelectedExamType] = useState<string>("preCT");
+  
+  const router = useRouter();
 
   const examTypes: string[] = ["preCT", "CT1", "CT2", "PUE", "UE"];
   const coNumbers: string[] = ["CO1", "CO2", "CO3", "CO4", "CO5"];
+
+  // Handle Edit Marks click
+  const handleEditMarks = () => {
+    // Get class and department from either props or loaded data
+    const classValue = propClass || marksData?.marks?.[0]?.class || "";
+    const departmentValue = propDepartment || marksData?.marks?.[0]?.department || "";
+    
+    const params = {
+      session,
+      section,
+      semester,
+      courseId,
+      class: classValue,
+      department: departmentValue,
+    };
+    
+    if (onEditMarks) {
+      // If parent component provided a callback
+      onEditMarks(params);
+    } else {
+      // Default behavior - navigate to edit page (adjust route as needed)
+      // You can modify this route based on your routing structure
+      const queryParams = new URLSearchParams({
+        session,
+        section,
+        semester,
+        courseId,
+        class: classValue,
+        department: departmentValue,
+      });
+      router.push(`/edit-tables?${queryParams.toString()}`);
+    }
+  };
 
   // API call function
   const fetchMarksData = async () => {
@@ -262,7 +313,6 @@ export default function MarksTable({
     );
   };
 
-
   // Calculate total minimum marks for current exam
   const getTotalMinMarks = (examData: Exam | null): number | string => {
     if (!examData) return "NA";
@@ -279,27 +329,83 @@ export default function MarksTable({
 
   // Show loading spinner
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <button
+            onClick={handleEditMarks}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Marks
+          </button>
+        </div>
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   // Show error message
   if (error) {
-    return <ErrorMessage message={error} onRetry={fetchMarksData} />;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <button
+            onClick={handleEditMarks}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Marks
+          </button>
+        </div>
+        <ErrorMessage message={error} onRetry={fetchMarksData} />
+      </div>
+    );
   }
 
   // Show no data message
   if (!marksData?.marks || marksData.marks.length === 0) {
     return (
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          No marks data found for the specified criteria.
-        </p>
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <button
+            onClick={handleEditMarks}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Marks
+          </button>
+        </div>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            No marks data found for the specified criteria.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Edit Marks Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleEditMarks}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit Marks
+        </button>
+      </div>
+
       {/* Course Info Header */}
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
         <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
@@ -307,6 +413,8 @@ export default function MarksTable({
         </h2>
         <p className="text-sm text-blue-700 dark:text-blue-300">
           Semester {marksData.marks[0]?.semester} • Section {marksData.marks[0]?.section} • Session {marksData.marks[0]?.session}
+          {marksData.marks[0]?.class && ` • Class ${marksData.marks[0].class}`}
+          {marksData.marks[0]?.department && ` • ${marksData.marks[0].department}`}
         </p>
       </div>
 

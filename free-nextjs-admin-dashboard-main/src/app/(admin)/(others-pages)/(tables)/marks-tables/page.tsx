@@ -9,14 +9,16 @@ interface MarksTablePageProps {
     semester?: string;
     section?: string;
     sections?: string;
+    class?: string;
+    department?: string;
   };
 }
 
 const MarksTablePage: React.FC<MarksTablePageProps> = ({ searchParams }) => {
-  const { courseId, courseName, session, semester, section } = searchParams;
+  const { courseId, courseName, session, semester, section, class: courseClass, department } = searchParams;
 
   // If required parameters are missing, show error message
-  if (!courseId || !courseName || !session || !semester || !section) {
+  if (!courseId || !courseName || !session || !semester || !section || !courseClass || !department) {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
@@ -38,6 +40,8 @@ const MarksTablePage: React.FC<MarksTablePageProps> = ({ searchParams }) => {
         section={section}
         semester={semester}
         courseId={courseId}
+        class={courseClass}
+        department={department}
       />
     </div>
   );

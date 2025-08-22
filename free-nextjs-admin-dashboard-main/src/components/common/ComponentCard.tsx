@@ -5,6 +5,7 @@ interface ComponentCardProps {
   children: React.ReactNode;
   className?: string; // Additional custom classes for styling
   desc?: string; // Description text
+  icon?: React.ReactNode; // Optional icon to display before title
 }
 
 const ComponentCard: React.FC<ComponentCardProps> = ({
@@ -12,6 +13,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   children,
   className = "",
   desc = "",
+  icon,
 }) => {
   return (
     <div
@@ -19,7 +21,8 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
     >
       {/* Card Header */}
       <div className="px-6 py-5">
-        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90 flex items-center gap-2">
+          {icon && icon}
           {title}
         </h3>
         {desc && (

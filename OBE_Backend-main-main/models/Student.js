@@ -6,7 +6,8 @@ const studentSchema = new mongoose.Schema({
   session: String,
   section: String,
   semester: String, // Add semester field
-  password: String, // Hashed password for authentication
+  department: String,
+  class: String,
   courses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }]
 });
 
